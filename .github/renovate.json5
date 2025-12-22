@@ -37,5 +37,14 @@
         'datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\sARG .*?_VERSION=(?<currentValue>v.*)\\s',
       ],
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/.github/workflows/.*\\.ya?ml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+version: (?<currentValue>.*?)\\s',
+      ],
+    },
   ],
 }
