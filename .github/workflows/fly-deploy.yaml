@@ -38,7 +38,7 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
         with:
           # renovate: datasource=github-releases depName=superfly/flyctl
-          version: 0.3.234
+          version: 0.4.0
       - name: Install Task
         uses: arduino/setup-task@v1
         with:
