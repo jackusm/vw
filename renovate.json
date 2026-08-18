@@ -6,22 +6,15 @@
     "automergeType": "pr",
     "platformAutomerge": true,
     "dependencyDashboard": true,
-    "dependencyDashboardApproval": false,
     "packageRules": [
         {
             "matchDatasources": ["docker"],
             "matchPackageNames": ["ghcr.io/dani-garcia/vaultwarden"],
-            "addLabels": ["vaultwarden-update"],
-            "dependencyDashboardApproval": false
+            "addLabels": ["vaultwarden-update"]
         },
         {
             "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-            "automerge": true,
-            "dependencyDashboardApproval": false
-        },
-        {
-            "matchUpdateTypes": ["major"],
-            "dependencyDashboardApproval": false
+            "automerge": true
         }
     ]
 }
