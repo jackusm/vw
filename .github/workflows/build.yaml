@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Image name
         id: image
@@ -77,7 +77,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Pin deployed image in fly.toml
         run: |
           sed -i "s|image = \".*\"|image = \"ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA:0:7}\"|" fly.toml
