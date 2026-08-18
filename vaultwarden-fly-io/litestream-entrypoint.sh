@@ -2,7 +2,7 @@
 #
 # requirements:
 #   - litestream (optional, if LITESTREAM_ENABLED is set to true)
-#   - age-keygen (optional, if AGE_PUBLIC_KEY is not set)
+#   - age-keygen (required, derives the public key from AGE_SECRET_KEY)
 #   - mc (optional, if IMPORT_DATABASE is used)
 #
 # variables:
@@ -16,11 +16,8 @@
 #     The path in the S3 bucket to replicate the database to.
 #
 #   - AGE_SECRET_KEY
-#     Private key generated with the age-keygen command for encrypting the Litestream replication,
-#
-#   - AGE_PUBLIC_KEY [optional]
-#     If set, it must be the public key matching AGE_SECRET_KEY. If not set, the age-keygen tool must be
-#     available so it can be derived from the AGE_SECRET_KEY.
+#     Private key generated with the age-keygen command for encrypting the Litestream replication.
+#     The matching public key is derived from it with age-keygen on every startup.
 #
 #   - LITESTREAM_DATABASE_PATH
 #     The full path to the SQlite database to restore/replicate.
@@ -30,7 +27,7 @@
 #     it will effectively start from nothing.
 #
 #   - LITESTREAM_RETENTION [default: 24h]
-#   - LITESTREAM_SYNC_INTERVAL [default: 1s]
+#   - LITESTREAM_SYNC_INTERVAL [default: 10s]
 #   - LITESTREAM_RETENTION_CHECK_INTERVAL [default: 1h]
 #   - LITESTREAM_VALIDATION_INTERVAL [default: 12h]
 #
@@ -43,42 +40,9 @@
 
 set -eu
 
-#
-# Utility functions
-#
-
-info() {
-  >&2 echo "[$0 |  INFO]" "$@"
-}
-
-error() {
-  >&2 echo "[$0 | ERROR]" "$@"
-}
-
-info_run() {
-  info '$' "$@"
-  "$@"
-}
-
-assert_is_set() {
-  eval "val=\${$1+x}"
-  if [ -z "$val" ]; then
-    error "missing expected environment variable \"$1\"."
-    exit 1
-  fi
-}
-
-#
-# This means business
-#
+. /lib.sh
 
 write_config() {
-  # Skip if config already exists (pre-created and merged by entrypoint.sh)
-  if [ -s /etc/litestream.yml ]; then
-    info "litestream custom config already exists, skipping write_config"
-    return
-  fi
-
   assert_is_set AWS_ACCESS_KEY_ID
   assert_is_set AWS_SECRET_ACCESS_KEY
   assert_is_set AWS_REGION
