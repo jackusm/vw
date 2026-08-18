@@ -1,14 +1,20 @@
 #!/bin/bash
+set -e
+TAG="$1"
+VAULTWARDEN_VERSION="$2"
 
 if [ -n "$(git log "origin/$(git rev-parse --abbrev-ref HEAD)"..HEAD)" ]; then
   echo "Error: There are unpushed commits on the current branch. Please push all changes before creating a release."
   exit 1
 fi
 
-# Find the previous tag of the same branch (e.g. v0.1.0-vaultwarden-1.2.3 -> v0.1.0-vaultwarden-1.2.2)
-PREVIOUS_TAG="$(git describe --tags --abbrev=0 "$1^" --match "$(echo "$1" | cut -d'-' -f1,2)*")"
-COMMITS="$(git log "$PREVIOUS_TAG..$1" --pretty=format:'- %h %s')"
+PREVIOUS_TAG="$(git describe --tags --abbrev=0 "$TAG^")"
+COMMITS="$(git log "$PREVIOUS_TAG..$TAG" --pretty=format:'- %h %s')"
 
 # Create a release on GitHub
-gh release create "$1" --notes "$COMMITS"
+if [ -n "$VAULTWARDEN_VERSION" ]; then
+  gh release create "$TAG" --title "$TAG (vaultwarden $VAULTWARDEN_VERSION)" --notes "$COMMITS"
+else
+  gh release create "$TAG" --notes "$COMMITS"
+fi
 git fetch --tags

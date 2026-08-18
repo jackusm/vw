@@ -18,12 +18,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/jackusm/vw
+            ${{ steps.image.outputs.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -65,3 +69,28 @@ jobs:
           context: vaultwarden-fly-io
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Pin deployed image in fly.toml
+        run: |
+          sed -i "s|image = \".*\"|image = \"ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA:0:7}\"|" fly.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: sha-${GITHUB_SHA:0:7} [skip ci]" || true
+          # ponytail: 5-try rebase loop; branch queue if concurrent pushes become routine
+          for i in 1 2 3 4 5; do git push && break; git pull --rebase --autostash; done
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
+        with:
+          # renovate: datasource=github-releases depName=superfly/flyctl
+          version: 0.4.83
+      - name: Deploy
+        run: fly deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

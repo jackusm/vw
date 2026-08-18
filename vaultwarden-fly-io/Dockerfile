@@ -15,9 +15,9 @@ RUN arch=$(cat /tmp/arch) &&\
 FROM ghcr.io/dani-garcia/vaultwarden:1.37.1-alpine
 RUN apk add age envsubst fuse jq openssl sudo
 COPY --from=litestream /litestream /usr/bin/litestream
-COPY litestream-entrypoint.sh /
 COPY --from=geesefs /geesefs /usr/bin/geesefs
 COPY --from=minio/mc:RELEASE.2024-10-02T08-27-28Z /usr/bin/mc /usr/bin/mc
+COPY litestream-entrypoint.sh /
 COPY entrypoint.sh .
 
 # NOTE: I tried to make this work, but mounting a directory with GeeseFS and using the --uid option seems to break

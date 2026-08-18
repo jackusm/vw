@@ -6,7 +6,7 @@ primary_region = "lhr"
 swap_size_mb = 128
 
 [build]
-  image = "ghcr.io/jackusm/vw:0.1.3-vaultwarden-1.37.1"
+  image = "ghcr.io/jackusm/vw:sha-0b332c0"
 
 [deploy]
   strategy = "immediate"
