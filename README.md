@@ -53,7 +53,9 @@ you should pay much less because your VM can be stopped for a large portion of t
    Because the admin password is already hashed, you can set it in your `fly.toml`'s `[env]` section instead
    of using `fly secrets set`.
 
-5. Create a copy of `fly.example.toml` and update the `app` name.
+5. Create a copy of `fly.example.toml` and update the `app` name. If you keep this repo public and don't want to
+   disclose your app name, you can instead omit `app` from the file and set the `FLY_APP` environment variable
+   (e.g. as a repository secret, like this repo's CI does) whenever you deploy.
 
 6. Run `fly deploy`
 
@@ -72,11 +74,11 @@ SQlite database before downloading it.
     sqlite> PRAGMA wal_checkpoint(TRUNCATE);
 
 Then copy the existing SQlite database to the S3 bucket with the key `import-db.sqlite` and redeploy your app with
-`IMPORT_DATABASE` set to `true`. This will make the startup sequence fetch the database from the S3 bucket instead
-of restoring the existing backup with Litestream.
+`IMPORT_DATABASE` set to the bucket path of that file. This will make the startup sequence fetch the database from
+the S3 bucket instead of restoring the existing backup with Litestream.
 
     $ mc cp db.sqlite3 tigris/my-vaultwarden-bucket/import-db.sqlite
-    $ fly deploy --env IMPORT_DATABASE=true
+    $ fly deploy --env IMPORT_DATABASE=import-db.sqlite
 
 Once that is complete, check the app logs to ensure that the database was imported from the S3 bucket and that the
 Litestream replication has completed. Redeploy your application without the `IMPORT_DATABASE` variable.
@@ -133,37 +135,24 @@ is backed up to.
 | `AWS_ENDPOINT_URL_S3`   | n/a, required |             |
 | `BUCKET_NAME`           | n/a, required |             |
 
-**Secrets**
-
 **Vaultwarden configuration**
+
+The `config.json` is generated only from the variables below. Any other Vaultwarden setting can be passed through
+as Vaultwarden's own environment variables (e.g. `SIGNUPS_ALLOWED=false`, `LOG_LEVEL=debug`), which the container
+hands to Vaultwarden directly.
 
 | Variable                                  | Default                            | Description                                                                                                                                                             |
 | ----------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VAULTWARDEN_ADMIN_TOKEN`                 | n/a, required                      | Token to enter the Vaultwarden admin panel with. Create it with `docker run -it --rm ghcr.io/dani-garcia/vaultwarden /vaultwarden hash`, may be stored as a non-secret. |
 | `VAULTWARDEN_RSA_PRIVATE_KEY`             | n/a, required                      | The RSA 2048-bits private key that Vaultwarden uses to sign JWTs. Generate with `openssl genrsa 2048`. If you change this value, all current JWTs are invalidated.      |
-| `VAULTWARDEN_LOG_LEVEL`                   | `info`                             |                                                                                                                                                                         |
 | `VAULTWARDEN_DOMAIN`                      | `https://${FLY_APP_NAME}.fly.dev`  | The public URL of your Vaultwarden deployment.                                                                                                                          |
 | `VAULTWARDEN_IP_HEADER`                   | `X-Real-IP`                        | The HTTP header used to determine the client's real IP address. Set to `CF-Connecting-IP` when using Cloudflare in front of Fly.io.                                     |
-| `VAULTWARDEN_SENDS_ALLOWED`               | `true`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_HIBP_API_KEY`                | (empty string)                     | Have I been Pwnd! API Key                                                                                                                                               |
-| `VAULTWARDEN_SIGNUPS_ALLOWED`             | `true`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_SIGNUPS_VERIFY`              | `false`                            |                                                                                                                                                                         |
-| `VAULTWARDEN_SIGNUPS_VERIFY_RESEND_TIME`  | `3600`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_SIGNUPS_VERIFY_RESEND_LIMIT` | `6`                                |                                                                                                                                                                         |
-| `VAULTWARDEN_INVITATIONS_ALLOWED`         | `true`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_EMERGENCY_ACCESS_ALLOWED`    | `true`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_EMAIL_CHANGE_ALLOWED`        | `true`                             |                                                                                                                                                                         |
-| `VAULTWARDEN_PASSWORD_ITERATIONS`         | `600000`                           |                                                                                                                                                                         |
-| `VAULTWARDEN_PASSWORD_HINTS_ALLOWED`      | `true`                             |                                                                                                                                                                         |
+| `VAULTWARDEN_HIBP_API_KEY`                | (empty string)                     | Have I been Pwnd! API Key                                                                                                               |
 | `VAULTWARDEN_PUSH_INSTALLATION_ID`        | n/a                                | Obtain your installation ID and key here to enable push notifications: https://bitwarden.com/host/                                                                      |
 | `VAULTWARDEN_PUSH_INSTALLATION_KEY`       | n/a                                | Must be set if `VAULTWARDEN_PUSH_INSTALLATION_ID` is set.                                                                                                               |
 | `VAULTWARDEN_SHOW_PASSWORD_HINT`          | `false`                            |                                                                                                                                                                         |
-| `VAULTWARDEN_INVITATION_ORG_NAME`         | `Vaultwarden`                      |                                                                                                                                                                         |
-| `VAULTWARDEN_DISABLE_2FA_REMEMBER`        | `false`                            |                                                                                                                                                                         |
+| `VAULTWARDEN_DISABLE_2FA_REMEMBER`        | `false`                            |                                                                                                                                   |
 | `VAULTWARDEN_USE_SENDMAIL`                | `false`                            |                                                                                                                                                                         |
-| `VAULTWARDEN_ENABLE_DUO`                  | `false`                            |                                                                                                                                                                         |
-| `VAULTWARDEN_ENABLE_SMTP`                 | `false`                            |                                                                                                                                                                         |
-| `VAULTWARDEN_ENABLE_EMAIL_2FA`            | value of `VAULTWARDEN_ENABLE_SMTP` |                                                                                                                                                                         |
 | `VAULTWARDEN_ENABLE_SMTP`                 | `false`                            |                                                                                                                                                                         |
 | `VAULTWARDEN_SMTP_HOST`                   | n/a, required if SMTP enabled      |                                                                                                                                                                         |
 | `VAULTWARDEN_SMTP_SECURITY`               | force_tls                          |                                                                                                                                                                         |
@@ -172,6 +161,7 @@ is backed up to.
 | `VAULTWARDEN_SMTP_FROM_NAME`              | Vaultwarden                        |                                                                                                                                                                         |
 | `VAULTWARDEN_SMTP_USERNAME`               | n/a, required if SMTP enabled      |                                                                                                                                                                         |
 | `VAULTWARDEN_SMTP_PASSWORD`               | n/a, required if SMTP enabled      |                                                                                                                                                                         |
+| `VAULTWARDEN_ENABLE_EMAIL_2FA`            | `true`                             | Only applied when SMTP is enabled.                                                                                                                               |
 | `VAULTWARDEN_ENABLE_YUBICO`               | `false`                            |                                                                                                                                                                         |
 | `VAULTWARDEN_YUBICO_CLIENT_ID`            | n/a, required if Yubico enabled    |                                                                                                                                                                         |
 | `VAULTWARDEN_YUBICO_SECRET_KEY`           | n/a, required if Yubico enabled    |                                                                                                                                                                         |
@@ -199,4 +189,4 @@ is backed up to.
 | Variable          | Default | Description                                                                                                                                                                                                                                                                      |
 | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ENTRYPOINT_IDLE` | `false` | If set to `true`, enter idle mode before launching the application or if an error occurs on startup. Note that Fly.io might stop the machine after a short while.                                                                                                                |
-| `IMPORT_DATABASE` | `false` | If set to `true`, the startup process will check for an `import-db.sqlite` file in the S3 bucket and load that instead of `litestream restore`. Use for migrating from another Vaultwarden instead. Should be turned off immediately after the litestream replication succeeded. |
+| `IMPORT_DATABASE` | unset  | If set, must be the path of an SQlite database file in the S3 bucket (e.g. `import-db.sqlite`); it is downloaded to replace the local database instead of running `litestream restore`. Use for migrating from another Vaultwarden. Should be turned off immediately after the litestream replication succeeded. |
