@@ -6,7 +6,7 @@ primary_region = "lhr"
 swap_size_mb = 128
 
 [build]
-  image = "ghcr.io/jackusm/vw:sha-e43684a"
+  image = "ghcr.io/jackusm/vw:sha-aefd809"
 
 [deploy]
   strategy = "immediate"
