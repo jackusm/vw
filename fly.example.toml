@@ -7,7 +7,7 @@ primary_region = "fra"
 swap_size_mb = 128
 
 [build]
-  image = "ghcr.io/niklasrosenstein/vaultwarden-fly-io:0.1.0-vaultwarden-1.32.1"
+  image = "ghcr.io/jackusm/vw:0.1.0-vaultwarden-1.32.1"
 
 [deploy]
   strategy = "immediate"

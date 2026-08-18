@@ -23,7 +23,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/niklasrosenstein/vaultwarden-fly-io
+            ghcr.io/jackusm/vw
           tags: |
             type=ref,event=branch
             type=ref,event=pr
