@@ -91,6 +91,6 @@ jobs:
           # renovate: datasource=github-releases depName=superfly/flyctl
           version: 0.4.83
       - name: Deploy
-        run: fly deploy
+        run: flyctl deploy
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
