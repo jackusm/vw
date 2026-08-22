@@ -12,7 +12,7 @@ RUN arch=$(cat /tmp/arch) &&\
     wget https://github.com/yandex-cloud/geesefs/releases/download/v0.41.3/geesefs-linux-${arch} -O geesefs && \
     chmod +x geesefs
 
-FROM ghcr.io/dani-garcia/vaultwarden:1.37.1-alpine
+FROM ghcr.io/dani-garcia/vaultwarden:1.37.2-alpine
 RUN apk add age fuse jq openssl
 COPY --from=litestream /litestream /usr/bin/litestream
 COPY --from=geesefs /geesefs /usr/bin/geesefs
