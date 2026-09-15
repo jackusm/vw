@@ -44,70 +44,94 @@ write_rsa_key() {
 write_config() {
   # Generate admin configuration from environment variables. Only non-default settings are written;
   # everything else falls back to Vaultwarden's built-in defaults.
+  # All values are passed to jq via --arg/--argjson, so no value can break the JSON syntax or
+  # inject additional configuration keys. Optional blocks are gated on the same flags as before.
   VAULTWARDEN_DOMAIN="${VAULTWARDEN_DOMAIN:-https://${FLY_APP_NAME}.fly.dev}"
   assert_is_set VAULTWARDEN_ADMIN_TOKEN
-
-  # shellcheck disable=SC2086
-  entries="\"log_timestamp_format\": \"%Y-%m-%d %H:%M:%S.%3f\"
-\"attachments_folder\": \"/mnt/s3/attachments\"
-\"icon_cache_folder\": \"/mnt/s3/icon_cache\"
-\"sends_folder\": \"/mnt/s3/sends\"
-\"domain\": \"${VAULTWARDEN_DOMAIN}\"
-\"hibp_api_key\": \"${VAULTWARDEN_HIBP_API_KEY:-}\"
-\"incomplete_2fa_time_limit\": 3
-\"show_password_hint\": ${VAULTWARDEN_SHOW_PASSWORD_HINT:-false}
-\"admin_token\": \"${VAULTWARDEN_ADMIN_TOKEN}\"
-\"ip_header\": \"${VAULTWARDEN_IP_HEADER:-X-Real-IP}\"
-\"icon_redirect_code\": 302
-\"icon_blacklist_non_global_ips\": true
-\"use_sendmail\": ${VAULTWARDEN_USE_SENDMAIL:-false}"
-
   if [ "${VAULTWARDEN_ENABLE_SMTP:-false}" = "true" ]; then
     assert_is_set VAULTWARDEN_SMTP_HOST
     assert_is_set VAULTWARDEN_SMTP_FROM
     assert_is_set VAULTWARDEN_SMTP_USERNAME
     assert_is_set VAULTWARDEN_SMTP_PASSWORD
-    entries="$entries
-\"smtp_host\": \"${VAULTWARDEN_SMTP_HOST}\"
-\"smtp_security\": \"${VAULTWARDEN_SMTP_SECURITY:-force_tls}\"
-\"smtp_port\": ${VAULTWARDEN_SMTP_PORT:-465}
-\"smtp_from\": \"${VAULTWARDEN_SMTP_FROM}\"
-\"smtp_from_name\": \"${VAULTWARDEN_SMTP_FROM_NAME:-Vaultwarden}\"
-\"smtp_username\": \"${VAULTWARDEN_SMTP_USERNAME}\"
-\"smtp_password\": \"${VAULTWARDEN_SMTP_PASSWORD}\"
-\"_enable_email_2fa\": ${VAULTWARDEN_ENABLE_EMAIL_2FA:-true}"
   fi
-
   if [ -n "${VAULTWARDEN_PUSH_INSTALLATION_ID:-}" ]; then
     assert_is_set VAULTWARDEN_PUSH_INSTALLATION_KEY
-    entries="$entries
-\"push_installation_id\": \"${VAULTWARDEN_PUSH_INSTALLATION_ID}\"
-\"push_installation_key\": \"${VAULTWARDEN_PUSH_INSTALLATION_KEY}\""
   fi
-
   if [ "${VAULTWARDEN_ENABLE_YUBICO:-false}" = "true" ]; then
     assert_is_set VAULTWARDEN_YUBICO_CLIENT_ID
     assert_is_set VAULTWARDEN_YUBICO_SECRET_KEY
-    entries="$entries
-\"_enable_yubico\": true
-\"yubico_client_id\": \"${VAULTWARDEN_YUBICO_CLIENT_ID}\"
-\"yubico_secret_key\": \"${VAULTWARDEN_YUBICO_SECRET_KEY}\""
   fi
 
+  jq_program='{
+  log_timestamp_format: "%Y-%m-%d %H:%M:%S.%3f",
+  attachments_folder: "/mnt/s3/attachments",
+  icon_cache_folder: "/mnt/s3/icon_cache",
+  sends_folder: "/mnt/s3/sends",
+  domain: $domain,
+  hibp_api_key: $hibp_api_key,
+  incomplete_2fa_time_limit: 3,
+  show_password_hint: $show_password_hint,
+  admin_token: $admin_token,
+  ip_header: $ip_header,
+  icon_redirect_code: 302,
+  icon_blacklist_non_global_ips: true,
+  use_sendmail: $use_sendmail
+}
++ (if $enable_smtp then {
+    smtp_host: $smtp_host,
+    smtp_security: $smtp_security,
+    smtp_port: $smtp_port,
+    smtp_from: $smtp_from,
+    smtp_from_name: $smtp_from_name,
+    smtp_username: $smtp_username,
+    smtp_password: $smtp_password,
+    _enable_email_2fa: $enable_email_2fa
+  } else {} end)
++ (if $push_installation_id != "" then {
+    push_installation_id: $push_installation_id,
+    push_installation_key: $push_installation_key
+  } else {} end)
++ (if $enable_yubico then {
+    _enable_yubico: true,
+    yubico_client_id: $yubico_client_id,
+    yubico_secret_key: $yubico_secret_key
+  } else {} end)
++ { admin_session_lifetime: 20 }
+'
+
   info "writing $VAULTWARDEN_CONFIG_PATH"
-  printf '{\n' >$VAULTWARDEN_CONFIG_PATH
-  echo "$entries" | sed 's/^/  /; s/$/,/' >>$VAULTWARDEN_CONFIG_PATH
-  printf '  "admin_session_lifetime": 20\n}\n' >>$VAULTWARDEN_CONFIG_PATH
+  jq -n \
+    --argjson enable_smtp "${VAULTWARDEN_ENABLE_SMTP:-false}" \
+    --argjson enable_yubico "${VAULTWARDEN_ENABLE_YUBICO:-false}" \
+    --arg domain "$VAULTWARDEN_DOMAIN" \
+    --arg admin_token "$VAULTWARDEN_ADMIN_TOKEN" \
+    --arg hibp_api_key "${VAULTWARDEN_HIBP_API_KEY:-}" \
+    --arg ip_header "${VAULTWARDEN_IP_HEADER:-X-Real-IP}" \
+    --argjson show_password_hint "${VAULTWARDEN_SHOW_PASSWORD_HINT:-false}" \
+    --argjson use_sendmail "${VAULTWARDEN_USE_SENDMAIL:-false}" \
+    --arg smtp_host "${VAULTWARDEN_SMTP_HOST:-}" \
+    --arg smtp_security "${VAULTWARDEN_SMTP_SECURITY:-force_tls}" \
+    --argjson smtp_port "${VAULTWARDEN_SMTP_PORT:-465}" \
+    --arg smtp_from "${VAULTWARDEN_SMTP_FROM:-}" \
+    --arg smtp_from_name "${VAULTWARDEN_SMTP_FROM_NAME:-Vaultwarden}" \
+    --arg smtp_username "${VAULTWARDEN_SMTP_USERNAME:-}" \
+    --arg smtp_password "${VAULTWARDEN_SMTP_PASSWORD:-}" \
+    --argjson enable_email_2fa "${VAULTWARDEN_ENABLE_EMAIL_2FA:-true}" \
+    --arg push_installation_id "${VAULTWARDEN_PUSH_INSTALLATION_ID:-}" \
+    --arg push_installation_key "${VAULTWARDEN_PUSH_INSTALLATION_KEY:-}" \
+    --arg yubico_client_id "${VAULTWARDEN_YUBICO_CLIENT_ID:-}" \
+    --arg yubico_secret_key "${VAULTWARDEN_YUBICO_SECRET_KEY:-}" \
+    "$jq_program" >"$VAULTWARDEN_CONFIG_PATH"
 
   # Prevent writing to the config.json, the admin panel should only serve as point to view settings.
-  chmod -w $VAULTWARDEN_CONFIG_PATH
+  chmod -w "$VAULTWARDEN_CONFIG_PATH"
 }
 
 validate_config() {
   # Validate the JSON file syntax. This is a sanity check that should prevent successful startup if we made a mistake
   # in the JSON syntax, as Vaultwarden will not complain and simply not load the file.
   info "validating $VAULTWARDEN_CONFIG_PATH syntax"
-  if ! jq < $VAULTWARDEN_CONFIG_PATH >/dev/null; then
+  if ! jq <"$VAULTWARDEN_CONFIG_PATH" >/dev/null; then
     error "we made a mistake in $VAULTWARDEN_CONFIG_PATH, please file a bug report"
     exit 1
   fi
