@@ -16,7 +16,6 @@ FROM ghcr.io/dani-garcia/vaultwarden:1.37.2-alpine
 RUN apk add age fuse jq openssl
 COPY --from=litestream /litestream /usr/bin/litestream
 COPY --from=geesefs /geesefs /usr/bin/geesefs
-COPY --from=minio/mc:RELEASE.2024-10-02T08-27-28Z /usr/bin/mc /usr/bin/mc
 COPY lib.sh /lib.sh
 COPY litestream-entrypoint.sh /
 COPY entrypoint.sh .

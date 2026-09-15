@@ -3,7 +3,7 @@
 # requirements:
 #   - litestream (optional, if LITESTREAM_ENABLED is set to true)
 #   - age-keygen (required, derives the public key from AGE_SECRET_KEY)
-#   - mc (optional, if IMPORT_DATABASE is used)
+#   - the /mnt/s3 S3 mount created by entrypoint.sh (optional, if IMPORT_DATABASE is used)
 #
 # variables:
 #   - AWS_ACCESS_KEY_ID
@@ -32,8 +32,9 @@
 #   - LITESTREAM_VALIDATION_INTERVAL [default: 12h]
 #
 #   - IMPORT_DATABASE [optional]
-#     If set, must be the path to an SQlite database in the S3 bucket (not a Litestream replication). It will be
-#     downloaded and placed in the LITESTREAM_DATABASE_PATH instead of restoring it with Litestream on startup.
+#     If set, must be the path of an SQlite database file within the "data/" prefix of the S3 bucket (which is
+#     mounted at /mnt/s3), e.g. "import-db.sqlite" for "data/import-db.sqlite" (not a Litestream replication).
+#     It will be copied to LITESTREAM_DATABASE_PATH instead of restoring it with Litestream on startup.
 #     Replication will continue as usual. Should be unset once the import is complete.
 #
 # usage: litestream-entrypoint.sh <exec_command>
@@ -89,21 +90,14 @@ maybe_import_database() {
     return 1
   fi
 
-  assert_is_set AWS_ACCESS_KEY_ID
-  assert_is_set AWS_SECRET_ACCESS_KEY
-  assert_is_set AWS_ENDPOINT_URL_S3
-
-  info "configuring mc"
-  mc alias set s3 "$AWS_ENDPOINT_URL_S3" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
-
-  if ! mc find "s3/$BUCKET_NAME/$IMPORT_DATABASE"; then
-    error "could not find file \"$IMPORT_DATABASE\" in S3 bucket \"$BUCKET_NAME\"."
+  if [ ! -f "/mnt/s3/$IMPORT_DATABASE" ]; then
+    error "could not find file \"$IMPORT_DATABASE\" in the S3 mount at /mnt/s3."
     exit 1
   fi
 
-  info "importing database file \"$IMPORT_DATABASE\" from S3 bucket \"$BUCKET_NAME\"."
+  info "importing database file \"$IMPORT_DATABASE\" from the S3 mount at /mnt/s3."
   info "remember to unset the IMPORT_DATABASE variable once the import is complete."
-  mc cp "s3/$BUCKET_NAME/$IMPORT_DATABASE" "$LITESTREAM_DATABASE_PATH"
+  cp "/mnt/s3/$IMPORT_DATABASE" "$LITESTREAM_DATABASE_PATH"
   return 0
 }
 
