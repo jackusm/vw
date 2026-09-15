@@ -2,7 +2,6 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": ["config:best-practices"],
     "rebaseWhen": "conflicted",
-    "automerge": true,
     "automergeType": "pr",
     "platformAutomerge": true,
     "dependencyDashboard": true,
@@ -13,8 +12,10 @@
             "addLabels": ["vaultwarden-update"]
         },
         {
+            "matchManagers": ["github-actions"],
             "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-            "automerge": true
+            "automerge": true,
+            "minimumReleaseAge": "3 days"
         }
     ],
     "customManagers": [
