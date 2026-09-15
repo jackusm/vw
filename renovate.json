@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended"],
+    "extends": ["config:best-practices"],
     "rebaseWhen": "conflicted",
     "automerge": true,
     "automergeType": "pr",
@@ -15,6 +15,15 @@
         {
             "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
             "automerge": true
+        }
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "fileMatch": ["^vaultwarden-fly-io/Dockerfile$"],
+            "matchStrings": [
+                "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\w+_VERSION=(?<currentValue>\\S+)"
+            ]
         }
     ]
 }

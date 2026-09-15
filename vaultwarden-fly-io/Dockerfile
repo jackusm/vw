@@ -1,19 +1,26 @@
-FROM alpine AS fetcher
-RUN apk add wget tar
-RUN arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/ > /tmp/arch
+FROM alpine:3.22 AS fetcher
+RUN apk add --no-cache wget tar && \
+    arch | sed 's/aarch64/arm64/;s/x86_64/amd64/' > /tmp/arch
 
 FROM fetcher AS litestream
-RUN arch=$(cat /tmp/arch) &&\
-    wget https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-${arch}.tar.gz && \
-    tar -xf litestream-v0.3.13-linux-${arch}.tar.gz
+# renovate: datasource=github-releases depName=benbjohnson/litestream
+ARG LITESTREAM_VERSION=0.3.13
+RUN set -eux; \
+    arch=$(cat /tmp/arch); \
+    wget -O litestream.tar.gz "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-${arch}.tar.gz"; \
+    tar -xf litestream.tar.gz
 
 FROM fetcher AS geesefs
-RUN arch=$(cat /tmp/arch) &&\
-    wget https://github.com/yandex-cloud/geesefs/releases/download/v0.41.3/geesefs-linux-${arch} -O geesefs && \
+# renovate: datasource=github-releases depName=yandex-cloud/geesefs
+ARG GEESEFS_VERSION=0.41.3
+RUN set -eux; \
+    arch=$(cat /tmp/arch); \
+    wget -O geesefs "https://github.com/yandex-cloud/geesefs/releases/download/v${GEESEFS_VERSION}/geesefs-linux-${arch}"; \
     chmod +x geesefs
 
+# Runs as root: GeeseFS/FUSE requires it (see mount_s3 note in entrypoint.sh).
 FROM ghcr.io/dani-garcia/vaultwarden:1.37.2-alpine
-RUN apk add age fuse jq openssl
+RUN apk add --no-cache age fuse jq openssl
 COPY --from=litestream /litestream /usr/bin/litestream
 COPY --from=geesefs /geesefs /usr/bin/geesefs
 COPY lib.sh /lib.sh
