@@ -1,4 +1,4 @@
-FROM alpine:3.22 AS fetcher
+FROM alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce AS fetcher
 RUN apk add --no-cache wget tar && \
     arch | sed 's/aarch64/arm64/;s/x86_64/amd64/' > /tmp/arch
 
@@ -19,7 +19,7 @@ RUN set -eux; \
     chmod +x geesefs
 
 # Runs as root: GeeseFS/FUSE requires it (see mount_s3 note in entrypoint.sh).
-FROM ghcr.io/dani-garcia/vaultwarden:1.37.2-alpine
+FROM ghcr.io/dani-garcia/vaultwarden:1.37.2-alpine@sha256:d16a304c2476fd787634ddde2c00be8fdfa1a72539438c626ece3686b5b88ab4
 RUN apk add --no-cache age fuse jq openssl
 COPY --from=litestream /litestream /usr/bin/litestream
 COPY --from=geesefs /geesefs /usr/bin/geesefs
