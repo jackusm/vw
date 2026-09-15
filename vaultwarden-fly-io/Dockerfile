@@ -12,7 +12,7 @@ RUN set -eux; \
 
 FROM fetcher AS geesefs
 # renovate: datasource=github-releases depName=yandex-cloud/geesefs
-ARG GEESEFS_VERSION=0.41.3
+ARG GEESEFS_VERSION=0.43.9
 RUN set -eux; \
     arch=$(cat /tmp/arch); \
     wget -O geesefs "https://github.com/yandex-cloud/geesefs/releases/download/v${GEESEFS_VERSION}/geesefs-linux-${arch}"; \
