@@ -2,6 +2,9 @@
 
 set -eu
 
+# Secrets (RSA keys, config.json, litestream.yml) are written to disk; keep them 0600.
+umask 077
+
 . /lib.sh
 
 #

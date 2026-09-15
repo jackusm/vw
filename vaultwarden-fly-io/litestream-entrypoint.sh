@@ -41,6 +41,9 @@
 
 set -eu
 
+# /etc/litestream.yml embeds the S3 credentials and the age secret key; keep it 0600.
+umask 077
+
 . /lib.sh
 
 write_config() {
