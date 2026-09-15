@@ -93,6 +93,14 @@ maybe_import_database() {
     return 1
   fi
 
+  # reject ".." as a whole path component only — ".." inside filenames (db..bak) is fine
+  case "$IMPORT_DATABASE" in
+    ..|../*|*/../*|*/..)
+      error "IMPORT_DATABASE must be a relative path within the data/ prefix (no \"..\" components)."
+      exit 1
+      ;;
+  esac
+
   if [ ! -f "/mnt/s3/$IMPORT_DATABASE" ]; then
     error "could not find file \"$IMPORT_DATABASE\" in the S3 mount at /mnt/s3."
     exit 1
