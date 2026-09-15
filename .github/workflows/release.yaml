@@ -5,6 +5,8 @@ on:
     types:
       - closed
 
+permissions: {}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -12,10 +14,9 @@ jobs:
     permissions:
       actions: write
       contents: write
-      packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -28,6 +29,7 @@ jobs:
         id: create_tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VAULTWARDEN_VERSION: ${{ steps.get_vaultwarden_version.outputs.VAULTWARDEN_VERSION }}
         run: |
           # Patch-bump previous tag; tag manually for minor/major bumps.
           PREVIOUS_TAG=$(git describe --tags --abbrev=0)
@@ -36,9 +38,8 @@ jobs:
           COMMITS=$(git log "$PREVIOUS_TAG..HEAD" --pretty=format:'- %h %s')
           git tag "$NEW_TAG"
           git push origin "$NEW_TAG"
-          VERSION="${{ steps.get_vaultwarden_version.outputs.VAULTWARDEN_VERSION }}"
-          if [ -n "$VERSION" ]; then
-            gh release create "$NEW_TAG" --title "$NEW_TAG (vaultwarden $VERSION)" --notes "$COMMITS"
+          if [ -n "$VAULTWARDEN_VERSION" ]; then
+            gh release create "$NEW_TAG" --title "$NEW_TAG (vaultwarden $VAULTWARDEN_VERSION)" --notes "$COMMITS"
           else
             gh release create "$NEW_TAG" --notes "$COMMITS"
           fi
@@ -46,5 +47,6 @@ jobs:
       - name: Trigger Build workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_TAG: ${{ steps.create_tag.outputs.NEW_TAG }}
         run: |
-          gh workflow run build.yaml --ref ${{ steps.create_tag.outputs.NEW_TAG }}
+          gh workflow run build.yaml --ref "$NEW_TAG"
