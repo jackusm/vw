@@ -7,10 +7,6 @@ on:
       - "vaultwarden-fly-io/**"
       - "fly.toml"
       - ".github/workflows/build.yaml"
-  pull_request:
-    paths:
-      - "vaultwarden-fly-io/**"
-      - ".github/workflows/build.yaml"
   workflow_dispatch:
 
 permissions: {}
