@@ -75,24 +75,23 @@ jobs:
     needs: docker
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    permissions: {}
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v7
-      - name: Pin deployed image in fly.toml
-        run: |
-          sed -i "s|image = \".*\"|image = \"ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA:0:7}\"|" fly.toml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "deploy: sha-${GITHUB_SHA:0:7} [skip ci]" || true
-          # ponytail: 5-try rebase loop; branch queue if concurrent pushes become routine
-          for i in 1 2 3 4 5; do git push && break; git pull --rebase --autostash; done
+      - name: Checkout config
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
         with:
           # renovate: datasource=github-releases depName=superfly/flyctl
           version: 0.4.83
       - name: Deploy
-        run: flyctl deploy
+        # Attach the image built by the docker job above (metadata-action
+        # `type=sha` tags it sha-<short sha>) — no fly.toml pin commits.
+        run: flyctl deploy --image "ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA:0:7}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP: ${{ secrets.FLY_APP }}

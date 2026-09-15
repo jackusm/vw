@@ -5,8 +5,7 @@
 primary_region = "lhr"
 swap_size_mb = 128
 
-[build]
-  image = "ghcr.io/jackusm/vw:sha-bc07db5"
+# Image is attached by CI via `flyctl deploy --image <ref>`; no pin here.
 
 [deploy]
   strategy = "immediate"
