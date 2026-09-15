@@ -73,11 +73,12 @@ SQlite database before downloading it.
 
     sqlite> PRAGMA wal_checkpoint(TRUNCATE);
 
-Then copy the existing SQlite database to the S3 bucket with the key `import-db.sqlite` and redeploy your app with
-`IMPORT_DATABASE` set to the bucket path of that file. This will make the startup sequence fetch the database from
-the S3 bucket instead of restoring the existing backup with Litestream.
+Then upload the existing SQlite database to the S3 bucket under the key `data/import-db.sqlite` (any S3 client
+works, e.g. the AWS CLI with `--endpoint-url https://fly.storage.tigris.dev`), and redeploy your app with
+`IMPORT_DATABASE` set to the path of that file relative to the `data/` prefix. This will make the startup sequence
+fetch the database from the S3 bucket instead of restoring the existing backup with Litestream.
 
-    $ mc cp db.sqlite3 tigris/my-vaultwarden-bucket/import-db.sqlite
+    $ aws s3 cp db.sqlite3 s3://<your-bucket>/data/import-db.sqlite --endpoint-url https://fly.storage.tigris.dev
     $ fly deploy --env IMPORT_DATABASE=import-db.sqlite
 
 Once that is complete, check the app logs to ensure that the database was imported from the S3 bucket and that the
@@ -91,7 +92,7 @@ Copy your existing Vaultwarden installation's RSA private key to a Fly secret:
 
 And copy your existing installations' attachments, sends and optionally icon cache to the S3 bucket:
 
-    $ mc cp --recursive attachments sends icon_cache tigris/my-vaultwarden-bucket/data/
+    $ aws s3 cp --recursive attachments sends icon_cache s3://<your-bucket>/data/ --endpoint-url https://fly.storage.tigris.dev
 
 Last but not least, check that all relevant configuration options in your existing installations' `config.json`
 or environment variables are also set as the corresponding `VAULTWARDEN_*` environment variables or secrets in your
@@ -189,4 +190,4 @@ hands to Vaultwarden directly.
 | Variable          | Default | Description                                                                                                                                                                                                                                                                      |
 | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ENTRYPOINT_IDLE` | `false` | If set to `true`, enter idle mode before launching the application or if an error occurs on startup. Note that Fly.io might stop the machine after a short while.                                                                                                                |
-| `IMPORT_DATABASE` | unset  | If set, must be the path of an SQlite database file in the S3 bucket (e.g. `import-db.sqlite`); it is downloaded to replace the local database instead of running `litestream restore`. Use for migrating from another Vaultwarden. Should be turned off immediately after the litestream replication succeeded. |
+| `IMPORT_DATABASE` | unset  | If set, must be the path of an SQlite database file within the `data/` prefix of the S3 bucket (e.g. `import-db.sqlite` for `data/import-db.sqlite`); it is copied from the S3 mount to replace the local database instead of running `litestream restore`. Use for migrating from another Vaultwarden. Should be turned off immediately after the litestream replication succeeded. |
