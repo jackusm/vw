@@ -20,7 +20,10 @@
     "customManagers": [
         {
             "customType": "regex",
-            "fileMatch": ["^vaultwarden-fly-io/Dockerfile$", "^\\.github/workflows/[^/]+\\.ya?ml$"],
+            "managerFilePatterns": [
+                "/^vaultwarden-fly-io/Dockerfile$/",
+                "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+            ],
             "matchStrings": [
                 "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\w+_VERSION=(?<currentValue>\\S+)",
                 "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+version: (?<currentValue>\\S+)"
