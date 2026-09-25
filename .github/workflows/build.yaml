@@ -83,7 +83,7 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
         with:
           # renovate: datasource=github-releases depName=superfly/flyctl
-          version: 0.4.106
+          version: 0.4.108
       - name: Deploy
         # Attach the image built by the docker job above (metadata-action
         # `type=sha` tags it sha-<short sha>) — no fly.toml pin commits.
