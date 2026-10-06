@@ -19,7 +19,7 @@ RUN set -eux; \
     chmod +x geesefs
 
 # Runs as root: GeeseFS/FUSE requires it (see mount_s3 note in entrypoint.sh).
-FROM ghcr.io/dani-garcia/vaultwarden:1.37.3-alpine@sha256:9a905c5cf5df61bb827da3805e160170741c0b53b0c63bb07e1afd3d2e21b1c8
+FROM ghcr.io/dani-garcia/vaultwarden:1.37.4-alpine@sha256:19ea2b669945d842dadc3d500f2d6a795866a003330f59a47b9634658bae98bb
 RUN apk add --no-cache age fuse jq openssl
 COPY --from=litestream /litestream /usr/bin/litestream
 COPY --from=geesefs /geesefs /usr/bin/geesefs
