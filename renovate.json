@@ -16,6 +16,12 @@
             "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
             "automerge": true,
             "minimumReleaseAge": "3 days"
+        },
+        {
+            "matchManagers": ["regex"],
+            "matchDepNames": ["superfly/flyctl"],
+            "automerge": true,
+            "minimumReleaseAge": "3 days"
         }
     ],
     "customManagers": [
