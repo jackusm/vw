@@ -18,7 +18,7 @@
             "minimumReleaseAge": "3 days"
         },
         {
-            "matchManagers": ["regex"],
+            "matchManagers": ["custom.regex"],
             "matchDepNames": ["superfly/flyctl"],
             "automerge": true,
             "minimumReleaseAge": "3 days"
