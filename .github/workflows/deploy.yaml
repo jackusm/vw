@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "fly.toml"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout config
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
+        with:
+          # renovate: datasource=github-releases depName=superfly/flyctl
+          version: 0.4.113
+      - name: Resolve last built image
+        id: img
+        # Last commit that touched image inputs == commit the Build workflow
+        # tagged sha-<short>. Deploy that exact tag, never a mutable one.
+        run: echo "sha=$(git log -1 --format=%h -- vaultwarden-fly-io/)" >> "$GITHUB_OUTPUT"
+      - name: Deploy
+        run: |
+          # Latest-wins: if a newer image commit landed on main while this run
+          # was queued/running, that run deploys — skip to avoid a downgrade.
+          git fetch --quiet origin main
+          LATEST=$(git log -1 --format=%h origin/main -- vaultwarden-fly-io/)
+          if [ "$LATEST" != "${{ steps.img.outputs.sha }}" ]; then
+            echo "newer image commit $LATEST exists — skipping deploy"
+            exit 0
+          fi
+          flyctl deploy --image "ghcr.io/${GITHUB_REPOSITORY,,}:sha-${{ steps.img.outputs.sha }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP: ${{ secrets.FLY_APP }}
