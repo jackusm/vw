@@ -87,10 +87,9 @@ jobs:
             echo "newer image commit $LATEST exists — skipping deploy"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # v1
         if: steps.guard.outputs.skip != 'true'
         with:
-          # renovate: datasource=github-releases depName=superfly/flyctl
           version: 0.4.113
       - name: Deploy
         if: steps.guard.outputs.skip != 'true'

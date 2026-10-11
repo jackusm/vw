@@ -18,9 +18,10 @@
             "minimumReleaseAge": "3 days"
         },
         {
-            "matchManagers": ["custom.regex"],
-            "matchDepNames": ["superfly/flyctl"],
+            "matchManagers": ["github-actions"],
+            "matchDepNames": ["flyctl"],
             "automerge": true,
+            "automergeType": "branch",
             "minimumReleaseAge": "3 days"
         }
     ],
@@ -28,12 +29,10 @@
         {
             "customType": "regex",
             "managerFilePatterns": [
-                "/^vaultwarden-fly-io/Dockerfile$/",
-                "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+                "/^vaultwarden-fly-io/Dockerfile$/"
             ],
             "matchStrings": [
-                "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\w+_VERSION=(?<currentValue>\\S+)",
-                "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+version: (?<currentValue>\\S+)"
+                "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\w+_VERSION=(?<currentValue>\\S+)"
             ]
         }
     ]
