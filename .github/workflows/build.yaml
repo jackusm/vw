@@ -91,7 +91,7 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         with:
           # renovate: datasource=github-releases depName=superfly/flyctl
-          version: 0.4.113
+          version: 0.4.114
       - name: Deploy
         if: steps.guard.outputs.skip != 'true'
         # Attach the image built by the docker job above (metadata-action
