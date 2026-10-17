@@ -90,7 +90,7 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # v1
         if: steps.guard.outputs.skip != 'true'
         with:
-          version: 0.4.115
+          version: 0.4.117
       - name: Deploy
         if: steps.guard.outputs.skip != 'true'
         # Attach the image built by the docker job above (metadata-action
