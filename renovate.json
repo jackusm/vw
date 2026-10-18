@@ -22,6 +22,7 @@
             "matchDepNames": ["flyctl"],
             "automerge": true,
             "automergeType": "branch",
+            "ignoreTests": true,
             "minimumReleaseAge": "3 days"
         }
     ],
