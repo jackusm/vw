@@ -4,7 +4,7 @@ RUN apk add --no-cache wget tar && \
 
 FROM fetcher AS litestream
 # renovate: datasource=github-releases depName=benbjohnson/litestream
-ARG LITESTREAM_VERSION=0.3.13
+ARG LITESTREAM_VERSION=0.5.17
 RUN set -eux; \
     arch=$(cat /tmp/arch); \
     wget -O litestream.tar.gz "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-${arch}.tar.gz"; \
