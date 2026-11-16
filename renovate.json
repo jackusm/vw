@@ -4,7 +4,9 @@
     "rebaseWhen": "conflicted",
     "automergeType": "pr",
     "platformAutomerge": true,
-    "dependencyDashboard": true,
+    "dependencyDashboard": {
+        "enabled": true
+    },
     "packageRules": [
         {
             "matchDatasources": ["docker"],
